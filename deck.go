@@ -1,12 +1,18 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"math/rand"
+	"os"
+	"strings"
+	"time"
+)
 
 // Create a new type of 'deck'
 // which is a slice of strings
 type deck []string
 
-// Create q new type of 'players
+// Create a new type of 'deckSlice'
 // which is a slice of decks
 type deckSlice []deck
 
@@ -29,7 +35,7 @@ func newDeck() deck {
 	return cards
 }
 
-func (d deck) print() {
+func (d deck) printDeck() {
 	for i, card := range d {
 		fmt.Println(i, card)
 	}
@@ -38,7 +44,7 @@ func (d deck) print() {
 func (ds deckSlice) printDecks() {
 	for i, player := range ds {
 		fmt.Println("Player ", i+1)
-		player.print()
+		player.printDeck()
 		fmt.Println("-----------")
 	}
 }
@@ -47,6 +53,16 @@ func (d *deck) dealCard() string {
 	returnCard := (*d)[0]
 	*d = removeIndex(*d, 0)
 	return returnCard
+}
+
+func (d deck) shuffleDeck() {
+	source := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(source)
+
+	for i := range d {
+		newPosition := r.Intn(len(d) - 1)
+		d[i], d[newPosition] = d[newPosition], d[i]
+	}
 }
 
 func (d *deck) deal(numDecks int, numCardsToDealEachDeck int) deckSlice {
@@ -62,4 +78,23 @@ func (d *deck) deal(numDecks int, numCardsToDealEachDeck int) deckSlice {
 
 	return returnDecks
 
+}
+
+func (d deck) toString() string {
+	return strings.Join([]string(d), ",")
+}
+
+func (d deck) saveToFile(filename string) error {
+	return os.WriteFile(filename, []byte(d.toString()), 0777)
+}
+
+func newDeckFromFile(filename string) deck {
+	bs, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(1)
+	}
+
+	s := strings.Split(string(bs), ",")
+	return deck(s)
 }
